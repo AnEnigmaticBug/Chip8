@@ -2,6 +2,7 @@
 #define CHIP8_H
 
 #include <stdint.h>
+#include <stdio.h>
 
 #define SCR_WD 64
 #define SCR_HT 32
@@ -21,5 +22,8 @@ typedef struct Chip8
     uint8_t delay_timer;
     uint8_t sound_timer;
 } Chip8;
+
+void chip8_init(Chip8 *self);
+void chip8_load_rom(Chip8 *self, FILE *rom_fp);
 
 #endif
