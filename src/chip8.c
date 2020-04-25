@@ -1,4 +1,5 @@
 #include "chip8.h"
+#include <stdlib.h>
 
 #define ROM_START_ADDRESS 0x200
 #define FONTSET_START_ADDRESS 0x50
@@ -202,5 +203,60 @@ static void op_9xy0(Chip8 *self)
     if (self->registers[ix] != self->registers[iy])
     {
         self->pc += 2;
+    }
+}
+
+static void op_Annn(Chip8 *self)
+{
+    uint16_t address = self->opcode & 0x0FFFu; 
+    self->idx_ptr = address;
+}
+
+static void op_Bnnn(Chip8 *self)
+{
+    uint16_t address = self->opcode & 0x0FFFu;
+    self->pc = self->registers[0] + address;
+}
+
+static void op_Cxkk(Chip8 *self)
+{
+    uint8_t ix = xreg_idx(self->opcode);
+    uint8_t byte = self->opcode & 0x00FFu;
+    uint8_t rand_byte = rand() % 255;
+
+    self->registers[ix] = rand_byte & byte;
+}
+
+static void op_Dxyn(Chip8 *self)
+{
+    uint8_t ix = xreg_idx(self->opcode);
+    uint8_t iy = yreg_idx(self->opcode);
+    uint8_t ht = self->opcode & 0x000Fu;
+
+    // Wrap around the screen boundary
+    uint8_t pos_x = self->registers[ix] % SCR_WD;
+    uint8_t pos_y = self->registers[iy] % SCR_HT;
+
+    self->registers[15] = 0;
+
+    for (int row = 0; row < ht; ++row)
+    {
+        uint8_t sprite_byte = self->memory[self->idx_ptr + row];
+
+        for (int col = 0; col < 8; ++col)
+        {
+            uint8_t sprite_pixel = sprite_byte & (0x80u >> col);
+            int vid_mem_idx = (row + pos_y) * SCR_WD + (col + pos_x);
+
+            if (sprite_pixel)
+            {
+                if (self->video_memory[vid_mem_idx] == 0xFFFFFFFF)
+                {
+                    self->registers[15] = 1;
+                }
+
+                self->video_memory[vid_mem_idx] ^= 0xFFFFFFFF;
+            }
+        }
     }
 }
