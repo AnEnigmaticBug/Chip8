@@ -208,7 +208,7 @@ static void op_9xy0(Chip8 *self)
 
 static void op_Annn(Chip8 *self)
 {
-    uint16_t address = self->opcode & 0x0FFFu; 
+    uint16_t address = self->opcode & 0x0FFFu;
     self->idx_ptr = address;
 }
 
@@ -258,5 +258,110 @@ static void op_Dxyn(Chip8 *self)
                 self->video_memory[vid_mem_idx] ^= 0xFFFFFFFF;
             }
         }
+    }
+}
+
+static void op_Ex9E(Chip8 *self)
+{
+    uint8_t ix = xreg_idx(self->opcode);
+
+    if (self->keypad[self->registers[ix]])
+    {
+        self->pc += 2;
+    }
+}
+
+static void op_ExA1(Chip8 *self)
+{
+    uint8_t ix = xreg_idx(self->opcode);
+
+    if (!self->keypad[self->registers[ix]])
+    {
+        self->pc += 2;
+    }
+}
+
+static void op_Fx07(Chip8 *self)
+{
+    uint8_t ix = xreg_idx(self->opcode);
+
+    self->registers[ix] = self->delay_timer;
+}
+
+static void op_Fx0A(Chip8 *self)
+{
+    uint8_t ix = xreg_idx(self->opcode);
+
+    for (int i = 0; i < 16; ++i)
+    {
+        if (self->keypad[i])
+        {
+            self->registers[ix] = i;
+            return;
+        }
+    }
+
+    self->pc -= 2;
+}
+
+static void op_Fx15(Chip8 *self)
+{
+    uint8_t ix = xreg_idx(self->opcode);
+
+    self->delay_timer = self->registers[ix];
+}
+
+static void op_Fx18(Chip8 *self)
+{
+    uint8_t ix = xreg_idx(self->opcode);
+
+    self->sound_timer = self->registers[ix];
+}
+
+static void op_Fx1E(Chip8 *self)
+{
+    uint8_t ix = xreg_idx(self->opcode);
+
+    self->idx_ptr += self->registers[ix];
+}
+
+static void op_Fx29(Chip8 *self)
+{
+    uint8_t ix = xreg_idx(self->opcode);
+
+    self->idx_ptr = FONTSET_START_ADDRESS + 5 * self->registers[ix];
+}
+
+static void op_Fx33(Chip8 *self)
+{
+    uint8_t ix = xreg_idx(self->opcode);
+    uint8_t num = self->registers[ix];
+
+    uint8_t val = num;
+
+    self->memory[self->idx_ptr + 2] = val % 10;
+    val /= 10;
+    self->memory[self->idx_ptr + 1] = val % 10;
+    val /= 10;
+    self->memory[self->idx_ptr + 0] = val % 10;
+}
+
+static void op_Fx55(Chip8 *self)
+{
+    uint8_t ix = xreg_idx(self->opcode);
+
+    for (int i = 0; i <= ix; ++i)
+    {
+        self->memory[self->idx_ptr + i] = self->registers[i];
+    }
+}
+
+static void op_Fx65(Chip8 *self)
+{
+    uint8_t ix = xreg_idx(self->opcode);
+
+    for (int i = 0; i <= ix; ++i)
+    {
+        self->registers[i] = self->memory[self->idx_ptr + i];
     }
 }
