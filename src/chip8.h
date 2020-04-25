@@ -25,5 +25,6 @@ typedef struct Chip8
 
 void chip8_init(Chip8 *self);
 void chip8_load_rom(Chip8 *self, FILE *rom_fp);
+void chip8_cycle(Chip8 *self);
 
 #endif

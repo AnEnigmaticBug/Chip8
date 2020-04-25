@@ -1,5 +1,6 @@
 #include "chip8.h"
 #include <stdlib.h>
+#include <string.h>
 
 #define ROM_START_ADDRESS 0x200
 #define FONTSET_START_ADDRESS 0x50
@@ -135,6 +136,26 @@ void chip8_load_rom(Chip8 *self, FILE *rom_fp)
     fseek(rom_fp, 0, SEEK_SET);
 
     fread(self->memory + ROM_START_ADDRESS, sizeof(uint8_t), file_size, rom_fp);
+}
+
+void chip8_cycle(Chip8 *self)
+{
+    // Opcodes are 16-bit and memory is byte organized. So we need 2 mem reads.
+    self->opcode = (self->memory[self->pc] << 8u) | self->memory[self->pc + 1];
+
+    self->pc += 2;
+
+    (*(root_op_table[(self->opcode & 0xF000u) >> 12u]))(self);
+
+    if (self->delay_timer > 0)
+    {
+        --(self->delay_timer);
+    }
+
+    if (self->sound_timer > 0)
+    {
+        --(self->sound_timer);
+    }
 }
 
 static void use_op_0_table(Chip8 *self)
