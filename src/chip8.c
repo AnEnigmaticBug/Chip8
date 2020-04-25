@@ -8,6 +8,54 @@
 #define xreg_idx(opcode) ((opcode & 0x0F00u) >> 8u)
 #define yreg_idx(opcode) ((opcode & 0x00F0u) >> 4u)
 
+typedef void (*Chip8Func)(Chip8 *);
+
+static void use_op_0_table(Chip8 *self);
+static void use_op_8_table(Chip8 *self);
+static void use_op_E_table(Chip8 *self);
+static void use_op_F_table(Chip8 *self);
+static void op_00E0(Chip8 *self);
+static void op_00EE(Chip8 *self);
+static void op_1nnn(Chip8 *self);
+static void op_2nnn(Chip8 *self);
+static void op_3xkk(Chip8 *self);
+static void op_4xkk(Chip8 *self);
+static void op_5xy0(Chip8 *self);
+static void op_6xkk(Chip8 *self);
+static void op_7xkk(Chip8 *self);
+static void op_8xy0(Chip8 *self);
+static void op_8xy1(Chip8 *self);
+static void op_8xy2(Chip8 *self);
+static void op_8xy3(Chip8 *self);
+static void op_8xy4(Chip8 *self);
+static void op_8xy5(Chip8 *self);
+static void op_8xy6(Chip8 *self);
+static void op_8xy7(Chip8 *self);
+static void op_8xyE(Chip8 *self);
+static void op_9xy0(Chip8 *self);
+static void op_Annn(Chip8 *self);
+static void op_Bnnn(Chip8 *self);
+static void op_Cxkk(Chip8 *self);
+static void op_Dxyn(Chip8 *self);
+static void op_Ex9E(Chip8 *self);
+static void op_ExA1(Chip8 *self);
+static void op_Fx07(Chip8 *self);
+static void op_Fx0A(Chip8 *self);
+static void op_Fx15(Chip8 *self);
+static void op_Fx18(Chip8 *self);
+static void op_Fx1E(Chip8 *self);
+static void op_Fx29(Chip8 *self);
+static void op_Fx33(Chip8 *self);
+static void op_Fx55(Chip8 *self);
+static void op_Fx65(Chip8 *self);
+static void op_null(Chip8 *self);
+
+Chip8Func root_op_table[0xF + 1] = {&op_null};
+Chip8Func op_0_table[0xE + 1] = {&op_null};
+Chip8Func op_8_table[0xE + 1] = {&op_null};
+Chip8Func op_E_table[0xE + 1] = {&op_null};
+Chip8Func op_F_table[0x65 + 1] = {&op_null};
+
 uint8_t fontset[FONTSET_SIZE] = {
     0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
     0x20, 0x60, 0x20, 0x20, 0x70, // 1
@@ -35,6 +83,49 @@ void chip8_init(Chip8 *self)
     {
         self->memory[FONTSET_START_ADDRESS + i] = fontset[i];
     }
+
+    root_op_table[0x0] = &use_op_0_table;
+    root_op_table[0x1] = &op_1nnn;
+    root_op_table[0x2] = &op_2nnn;
+    root_op_table[0x3] = &op_3xkk;
+    root_op_table[0x4] = &op_4xkk;
+    root_op_table[0x5] = &op_5xy0;
+    root_op_table[0x6] = &op_6xkk;
+    root_op_table[0x7] = &op_7xkk;
+    root_op_table[0x8] = &use_op_8_table;
+    root_op_table[0x9] = &op_9xy0;
+    root_op_table[0xA] = &op_Annn;
+    root_op_table[0xB] = &op_Bnnn;
+    root_op_table[0xC] = &op_Cxkk;
+    root_op_table[0xD] = &op_Dxyn;
+    root_op_table[0xE] = &use_op_E_table;
+    root_op_table[0xF] = &use_op_F_table;
+
+    op_0_table[0x0] = &op_00E0;
+    op_0_table[0xE] = &op_00EE;
+
+    op_8_table[0x0] = &op_8xy0;
+    op_8_table[0x1] = &op_8xy1;
+    op_8_table[0x2] = &op_8xy2;
+    op_8_table[0x3] = &op_8xy3;
+    op_8_table[0x4] = &op_8xy4;
+    op_8_table[0x5] = &op_8xy5;
+    op_8_table[0x6] = &op_8xy6;
+    op_8_table[0x7] = &op_8xy7;
+    op_8_table[0xE] = &op_8xyE;
+
+    op_E_table[0x1] = &op_ExA1;
+    op_E_table[0xE] = &op_Ex9E;
+
+    op_F_table[0x07] = &op_Fx07;
+    op_F_table[0x0A] = &op_Fx0A;
+    op_F_table[0x15] = &op_Fx15;
+    op_F_table[0x18] = &op_Fx18;
+    op_F_table[0x1E] = &op_Fx1E;
+    op_F_table[0x29] = &op_Fx29;
+    op_F_table[0x33] = &op_Fx33;
+    op_F_table[0x55] = &op_Fx55;
+    op_F_table[0x65] = &op_Fx65;
 }
 
 void chip8_load_rom(Chip8 *self, FILE *rom_fp)
@@ -44,6 +135,26 @@ void chip8_load_rom(Chip8 *self, FILE *rom_fp)
     fseek(rom_fp, 0, SEEK_SET);
 
     fread(self->memory + ROM_START_ADDRESS, sizeof(uint8_t), file_size, rom_fp);
+}
+
+static void use_op_0_table(Chip8 *self)
+{
+    (*(op_0_table[self->opcode & 0x000Fu]))(self);
+}
+
+static void use_op_8_table(Chip8 *self)
+{
+    (*(op_8_table[self->opcode & 0x000Fu]))(self);
+}
+
+static void use_op_E_table(Chip8 *self)
+{
+    (*(op_E_table[self->opcode & 0x000Fu]))(self);
+}
+
+static void use_op_F_table(Chip8 *self)
+{
+    (*(op_F_table[self->opcode & 0x00FFu]))(self);
 }
 
 static void op_00E0(Chip8 *self)
@@ -365,3 +476,5 @@ static void op_Fx65(Chip8 *self)
         self->registers[i] = self->memory[self->idx_ptr + i];
     }
 }
+
+static void op_null(Chip8 *self) {}
