@@ -85,6 +85,9 @@ void chip8_init(Chip8 *self)
         self->memory[FONTSET_START_ADDRESS + i] = fontset[i];
     }
 
+    // The screen starts out fully blank.
+    memset(self->video_memory, 0, sizeof(self->video_memory));
+
     root_op_table[0x0] = &use_op_0_table;
     root_op_table[0x1] = &op_1nnn;
     root_op_table[0x2] = &op_2nnn;
