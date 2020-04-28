@@ -15,6 +15,23 @@ As an example, download [this](https://github.com/corax89/chip8-test-rom/blob/ma
 
 Check out [this](https://github.com/dmatlack/chip8/tree/master/roms/games) link to see an extensive collection of game ROMs.
 
+### Keypad to Keyboard input mapping
+
+By design, Chip8 takes user input via 16 keys(0-F) on a keypad. They are mapped to your keyboard as shown in this diagram. All the game ROMs specify input controls in terms of keypad keys.
+
+<pre>
+Keypad       Keyboard
++-+-+-+-+    +-+-+-+-+
+|1|2|3|C|    |1|2|3|4|
++-+-+-+-+    +-+-+-+-+
+|4|5|6|D|    |Q|W|E|R|
++-+-+-+-+ => +-+-+-+-+
+|7|8|9|E|    |A|S|D|F|
++-+-+-+-+    +-+-+-+-+
+|A|0|B|F|    |Z|X|C|V|
++-+-+-+-+    +-+-+-+-+
+</pre>
+
 ## Why code this thing in C?
 
 A couple of reaons:
